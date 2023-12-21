@@ -1702,8 +1702,7 @@ class Model:
         
         See also Birnstiel et al. 2010; 2011
         """
-        
-        
+
         x = np.random.power(6-3*self.para["x_frag"]+1, size=1)[0] 
         # See Birnstiel+ 2011; we draw a value between 0 and 1, which is the range of possible values.
         self.seedNo += 1
@@ -1745,8 +1744,7 @@ class Model:
             size = self.grainSizes[ind]
             self.monomer.homeAggregate.prop["NCol"] = 1/self.effectiveFact[ind]
 
-         #determines cloud size
-        #print("Cloud size of collision partner: "+str(self.monomer.homeAggregate.prop["NCol"]))
+        # Determine group size
         self.monomer.homeAggregate.prop["sCol"] = size
         self.monomer.homeAggregate.prop["mCol"] = 4/3*np.pi*self.monomer.homeAggregate.prop["sCol"]**3*self.monomer.homeAggregate.prop["rhoAgg"]
         
@@ -1761,9 +1759,9 @@ class Model:
         Determines whether erosion, fragmentation or coagulation takes place. All input is in SI.
         """
         
-        vRel = self.calcTotVRel(t, r, z, doPrint=False) ### Note that calcTotVrel takes input in SI
+        vRel = self.calcTotVRel(t, r, z, doPrint=False) # Note that calcTotVrel takes input in SI
         self.vRel = vRel
-        #print(vRel)
+       
         cond = 99
         # Determine whether fragmentation occurs
         if vRel>=self.para["v_frag"]:
@@ -1784,9 +1782,7 @@ class Model:
             self.seedNo += 1
             np.random.seed(self.seedNo)
         
-        # if (vRel>self.para["v_frag"]):
-        #     print(t/(self.sTOyr*1e3), vRel, fragmentation, cond)
-        if fragmentation: # if fragmentation we need to pick a new, smaller size of our home aggregate
+        if fragmentation: # if fragmentation occurs we need to pick a new, smaller size of our home aggregate
 
             # does catastrophic disruption or erosion occur?
             massRat = self.monomer.homeAggregate.prop["mCol"]/self.monomer.homeAggregate.prop["mAgg"]
@@ -1803,14 +1799,10 @@ class Model:
                     # Is the monomer in the excavated mass? Two masses worth of mCol are excavated from 
                     # the home aggregate. Assuming random location,
                     # the ejection probability is given by:
-
-                    pNotEj = (1-mTot/mAgg)**self.monomer.homeAggregate.prop["NCol"] # probability of not 
-                    #being ejected
+                    pNotEj = (1-mTot/mAgg)**self.monomer.homeAggregate.prop["NCol"] # Probability of not being ejected
                     pEj = 1-pNotEj
-                    #print("Ejection probability", pEj)
 
-                    if np.random.rand()<=pEj:     # the monomer is ejected and we need to determine the size of 
-                                        # the fragment.           
+                    if np.random.rand()<=pEj:# The monomer is ejected and we need to determine the size of the fragment.           
                         
                         mMax = mCol
                         self.monomer.homeAggregate.prop["mAgg"] = self.determineFragmentMass(mMax)
@@ -1818,8 +1810,7 @@ class Model:
                         outcome = "ejection"
                         interaction_id = 4
                         
-                    else: # some mass is eroded away from the home aggregate, but the monomer remains in 
-                            #the home aggregate.
+                    else: # Some mass is eroded away from the home aggregate, but the monomer remains in the home aggregate.
                         self.monomer.homeAggregate.prop["mAgg"] -= mTot/2 
                         message = "home aggregate eroded by {:.1e} particles, monomer remained".format(self.monomer.homeAggregate.prop["NCol"])
                         outcome = "erosion"
@@ -1830,15 +1821,12 @@ class Model:
 
             elif massRat>=1/self.mrat:
                 # In this case the home aggregate is the eroding particle.
-                # Note that in this case, the collision partner is never a cloud.
+                # Note that in this case, the collision partner is never a group.
 
                     mTot = 2*mAgg
-
-                    # Is the monomer in the excavated mass? ---> Assume no? May read a bit better into this.
-                    # - Brauer, Dullemond & Henning (2008)  
-                    # - Hasegawa et al. (2021) - Simulations, v_frag is function of mass ratio. 
+                    # Is the monomer in the excavated mass? ---> Assume not. 
                     # For now, lets assume bullets: 2x mAgg of the collision partner are excavated such that the collision partner is the new home aggregate.
-                    # the impactor burries itself deep enough such that the excavated mass is solely originating from the collision partner.
+                    # the impactor buries itself deep enough such that the excavated mass is solely originating from the collision partner.
                     self.monomer.homeAggregate.prop["mAgg"] = self.monomer.homeAggregate.prop["mCol"] - mTot/2
                     message = "home aggregate impacted"
                     outcome = "impact"
@@ -1851,30 +1839,23 @@ class Model:
                     self.monomer.homeAggregate.prop["mAgg"] = self.determineFragmentMass(max([mAgg, mCol]))
 
                     # In which fragment is the monomer? What is the size of this fragment?
-
                     message = "catastrophic disruption"
                     outcome = "fragmentation"
                     interaction_id = 2
                     
-
-            # to include: determine the new depth of the monomer and whether it is exposed
-
-        else: # otherwise we update it. Coagulation takes place.
+        else: # Otherwise coagulation takes place. Update the aggregate mass.
             self.monomer.homeAggregate.prop["mAgg"] += self.monomer.homeAggregate.prop["mCol"]*self.monomer.homeAggregate.prop["NCol"]
             message = "coagulation with {:.1e} particle(s) of size {:.1e} m".format(self.monomer.homeAggregate.prop["NCol"], self.monomer.homeAggregate.prop["sCol"])
             outcome = "coagulation"
             interaction_id = 1
 
-
         # In any case the new home aggregate size is calculated via the new mass.
-
         self.monomer.homeAggregate.prop["sAgg"] = (3*self.monomer.homeAggregate.prop["mAgg"]/(4*np.pi*self.monomer.homeAggregate.prop["rhoAgg"]))**(1/3)   
         
         if self.monomer.homeAggregate.prop["sAgg"]<self.monomer.prop["sMon"]:
-         # If the fragment is smaller than the monomer size there will be a free monomer.
+         # If the fragment is smaller than the monomer will be free.
             self.monomer.homeAggregate.prop["sAgg"] = self.monomer.prop["sMon"]
             self.monomer.homeAggregate.prop["mAgg"] = self.monomer.prop["mMon"]
-        
         
         if (self.debug)and(self.monomer.homeAggregate.prop["sAgg"]>self.grainSizes[-1]):
             print("Home aggregate exceeded maximum mass in background distribution distribution")
@@ -1884,20 +1865,21 @@ class Model:
             print("v_rel: ", vRel,"m/s")
             print(t,r,z)
         
-        
-        # Determine new depth of the monomer, and (if needed) if we are still exposed to the gas phase.
+        # Determine new depth of the monomer, and whether we are exposed to the gas phase.
         if self.trackice:
             self.determineMonomerExposed(outcome)
-        
 
         return message, interaction_id
     
     
     def doCollisions(self, r_in, z_in, t_in):
+        """"
+        The main function for the collisional evolution.
+        """"
         
         r, z, t = self.unpackVars(r_in, z_in, t_in)
         
-        collision = self.determineCollisionP(t, r ,z)
+        collision = self.determineCollisionP(t, r ,z) # Did a collision occur? True of False.
 
         if collision:
             self.determineCollisionPartner(t, r, z)
@@ -1915,8 +1897,12 @@ class Model:
             (self.monomer.sec_sol["interaction"]).append(interaction_id)
             (self.monomer.sec_sol["exposed"]).append(int(self.monomer.exposed))
       
-    
+# Auxliary functions on calculating monomer depth and exposure to gas phase after a collision has occured.
+
     def determinePExp(self):
+        """
+        Calculates the exposure probability.
+        """
 
         tau = 3/4*(self.monomer.prop["zMon"]-self.monomer.prop["zCrit"])/self.monomer.prop["sMon"]*(self.monomer.homeAggregate.prop["phi"])
         pVals = expn(2, tau) # We solve the exponential integral
@@ -1936,9 +1922,6 @@ class Model:
         """
         Determines the depth in the new home aggregate at which the monomer is located. Method depends on collision outcome. Requires the new aggregate size
         to be known.
-        
-        Note to self: We still have the possibility to make the exposure probability vary as a function of distance from the home aggregate core. For now it is
-        0 if z>z_crit or 1 if z<z_crit
         """
         
         # First we determine the new depth
@@ -1947,7 +1930,7 @@ class Model:
             sNew = self.monomer.homeAggregate.prop["sAgg"]
             self.monomer.prop["zMon"] += sNew-sOld
             if self.monomer.prop["zMon"]<0:
-                self.monomer.prop["zMon"] = 0 # if erosion of the home aggregate leads to a negative z, we set it zero.
+                self.monomer.prop["zMon"] = 0 # If erosion of the home aggregate leads to a negative z, we set it zero.
         elif outcome in ["fragmentation", "ejection", "impact"]: 
             self.monomer.prop["zMon"] = self.determineRandomPos() 
             
@@ -1968,27 +1951,22 @@ class Model:
 #################################################################################################
 ### Operations related to ice formation
 #################################################################################################
-
     
     def calcElements(self):
         """
-        This method returns the respective masses of H, C, N, O & S in kg present in the monomer ice mantle. 
+        Returns the respective masses of H, C, N, O & S in kg present in the monomer ice mantle. 
         
         This method should only be used after the main integrateMonomer loop.
         """
         
         
-        #diffMass *= self.monomer.prop["mMon"] # gain of molecule X in kg
-            # Not needed as we are now tracing the ice mass in kg.
-        
         self.monomer.ele_sol=np.zeros((len(self.monomer.ice_sol[self.disk.iceList[0]]),5))
         
-        #self.monomer.ice_sol[self.disk.iceList[n]]
         
         for n in range(self.iceNum):
             iceName = self.disk.iceList[n]
         
-            # convert to moles
+            # Convert to moles
             conv = self.para["m"+iceName]/self.para["u"]*1e-3 #m+Icename is in kg, so conv represents kg/mol for molecule X
 
             massMol = self.monomer.ice_sol[iceName]/conv # mass of molecule X in moles
@@ -1997,9 +1975,8 @@ class Model:
             # calculate how many moles there of every element due to the presence of molecule X.
             
             kgElement = molElement*self.para["mElements"]# Convert from moles to kg.
-            #print(np.outer(massMol kgElement).shape)
+
             self.monomer.ele_sol += np.outer(massMol, kgElement) # gives the mass change in moles for each element. Multiply with molar mass to find gain in kg.
-        
         
         return self.monomer.ele_sol
 
@@ -2023,15 +2000,12 @@ class Model:
             tds = self.rateDesorptionThermal(t, r, z, iceName, dustT=None, iceList=iceList)
             pds = self.rateDesorptionPhoto(t, r, z, iceName, iceList=iceList)        
             
-            # prodimo uses surface, we use cross section
+            # Prodimo uses surface, we use cross section
             diffMass = cross*ads -surface*tds -cross*pds
-            
-            #extrafact = self.monomer.prop["mMon"]*self.environment["nd"]/self.environment["rhod"]
-            #
-            #diffMass *= 1#extrafact#############################
 
             qFactor = np.nan
         else:
+            # Note that only the else-clause currently works. The rest is discontinued. 
 
             if self.readsorption:
             # if this lever is true we assume all thermally desorbed ice is readsorbed.
@@ -2041,7 +2015,7 @@ class Model:
                 ads = 0
                 qFactor = 1
             elif self.readsorption==None:
-                tds, qFactor = self.rateDesorptionInternal(t, r, z, iceName, iceList=iceList)########## TO DO: iceList
+                tds, qFactor = self.rateDesorptionInternal(t, r, z, iceName, iceList=iceList)
                 # Note that in this case the q-factor is defined in the above method.
                 diffMass = -surface*tds
                 pds = 0
@@ -2050,18 +2024,15 @@ class Model:
                 ## Otherwise we only do thermal desorption.
                 tds = self.rateDesorptionThermal(t, r, z, iceName, dustT=None, iceList=iceList)
                 diffMass = -surface*tds
-                # Otherwise nothing happens
-                #diffMass = 0
-                #tds = 0
                 pds = 0
                 ads = 0
                 qFactor = 0
                
         
         if self.legacyIce:
-            return diffMass, ads, tds, pds, qFactor # In the old formalism we can return the rates
+            return diffMass, ads, tds, pds, qFactor # In the old integration formalism we can return the rates
         else:
-            # Otherwise we store them in a class variable.
+            # Otherwise we would have to store them in a class variable. Implement this if ever needed in the current integration algorithm.
             # if self.t_track==0.:
             #    iceInd = self.disk.iceList.index(iceName)
             #    self.rateTrack[iceInd, 0] = cross*ads
@@ -2073,6 +2044,9 @@ class Model:
         
 
     def doIceEvolutionMyOwn(self, r_in, z_in, t_in):
+        """
+        The old ice evolution code used if self.legacyIce==True. Has severe stability issues inside r = 5 AU.
+        """
         
         r,z,t = self.unpackVars(r_in, z_in, t_in)
 
@@ -2091,7 +2065,6 @@ class Model:
         
         while n<self.iceNum:
             
-            # print("Calculating for "+self.disk.iceList[n]+" ice")
             diffMass, adsPrelim[self.disk.iceList[n]], tdsPrelim[self.disk.iceList[n]], pdsPrelim[self.disk.iceList[n]], qPrelim[self.disk.iceList[n]] = self.iceMassChange(t, r, z, self.disk.iceList[n])
             diffMassPrelim[self.disk.iceList[n]] = diffMass*self.delta_t
             
@@ -2107,17 +2080,13 @@ class Model:
                 ratio = diffMassPrelim[self.disk.iceList[n]]/(self.monomer.ice_sol[self.disk.iceList[n]])[-1]
            
             ratioBool = ratio>self.fice
-            # is the relative mass change for species n exceeded?
-            
+            # Is the relative mass change for species n exceeded?
             floorBool = self.delta_t>deltaTfloor 
-            # have we not yet reached the minimum allowed timestep?
-            
+            # Have we not yet reached the minimum allowed timestep?
             bareBool = (self.monomer.ice_sol[self.disk.iceList[n]])[-1]<1e-50 
             # Was the monomer not just iceless?
-            #if bareBool:
-                #print("ding")
             notConstTimeBool = not self.constTimestep[0] 
-            # do we not use constant timestep?
+            # Do we not use constant timestep?
             
             n += 1
             
@@ -2145,7 +2114,7 @@ class Model:
         #------------------------------------------------------------------------
         
         for n in range(self.iceNum):
-            #First make the preliminary ads/tds/pds rates final.
+            # First make the preliminary ads/tds/pds rates final.
             (self.monomer.ice_sol["ads"+self.disk.iceList[n]]).append(adsPrelim[self.disk.iceList[n]])
             (self.monomer.ice_sol["tds"+self.disk.iceList[n]]).append(tdsPrelim[self.disk.iceList[n]])
             (self.monomer.ice_sol["pds"+self.disk.iceList[n]]).append(pdsPrelim[self.disk.iceList[n]])
@@ -2155,7 +2124,7 @@ class Model:
             iceNew = (self.monomer.ice_sol[self.disk.iceList[n]])[-1] + diffMassPrelim[self.disk.iceList[n]]
 
             
-            self.monomer.ice_sol[self.disk.iceList[n]].append(max([0,iceNew])) # at the end we add the new ice solution
+            self.monomer.ice_sol[self.disk.iceList[n]].append(max([0,iceNew])) # At the end we add the new ice solution
             
         # Once we are done with dealing with the various ices, we calculate the new total amount of ice on the monomer.
         iceTot = self.calcIceTot()
@@ -2180,8 +2149,6 @@ class Model:
                 if -diffMassPrelimZ[self.disk.iceList[n]]>=(self.monomer.ice_sol[self.disk.iceList[n]])[-1]:
                     iceNew = (self.monomer.ice_sol[self.disk.iceList[n]])[-1] + diffMassPrelimZ[self.disk.iceList[n]]
                     (self.monomer.ice_sol[self.disk.iceList[n]])[-1] = max([0,iceNew])                   
-                
-                    #print("Zeroclause triggered")
 
                     (self.monomer.ice_sol["ads"+self.disk.iceList[n]])[-1] = adsPrelimZ[self.disk.iceList[n]]
                     (self.monomer.ice_sol["tds"+self.disk.iceList[n]])[-1] = tdsPrelimZ[self.disk.iceList[n]]
@@ -2200,7 +2167,7 @@ class Model:
     
     def scipyAuxFunc(self, t_in, y_in, *args):
         """
-        Auxilary function which calculates the derivatives for the ice changes.
+        Auxilary function for the new ice evolution function which calculates the derivatives for the ice changes.
         
         Units:
         Position: AU
@@ -2227,7 +2194,7 @@ class Model:
             # note we have to convert from kg/s to potatoes/kyr          
             dydt[n] = self.iceMassChange(t, r, z, self.disk.iceList[n], iceList=iceList)*(1e3*self.sTOyr)/(self.numFact)
             
-        ####### Failsave for when ice abundances get too low.
+        # Failsave for when ice abundances get too low.
             if iceList[self.disk.iceList[n]]/self.monomer.prop["mMon"]<self.floorval and dydt[n]<0:
                 dydt[n] = 0
 
@@ -2235,12 +2202,21 @@ class Model:
     
     @timeout(1.5)
     def advanceIceMantle(self, t_start, t_stop, y0, position, integrator):
+        """
+        Function that sets up and runs the scipy-integrator with the given settings.
+
+        t_start, t_stop:
+            t_start should be 0 and t_stop equal to the global timestep.
+        y_0:
+            Array containing the ice amounts on the monomer at t_start.
+        position:
+            Array containing the global position and time coordinates (see also doIceEvolutionSciPy).
+        integrator:
+            Which integrator scipy has to use. Default is LSODA, Radau and BDF are good backup options if LSODA fails.
+        """
         
         success=False
         self.printFlag = True
-        
-        #methodExp, methodCov = self.integrator
-        
 
         t_eval = None
 
@@ -2260,13 +2236,6 @@ class Model:
             success = sol["success"]
         else:
             success = False
-
-    #if (not success)and(not self.printIntWarning):
-        #    print(sol)
-        #    raise RuntimeError("Ice integration did not converge at t = {:.2f} kyr".format(t_in))
-            #print("Warning: ODE integrator did not converge at r = {:.2f} AU".format(r_in))
-            #self.printIntWarning = True
-            #print(sol)
       
         return sol, success
     
@@ -2275,26 +2244,23 @@ class Model:
         """
         New code which solves the time evolution of the monomer ice using pre-existing ODE-integration routines.  
         
-        
-        Classification of exit index:
-        0 - Integrator worked as intended
+        Classification of exit index (did the integration converge?):
+        0 - Integrator worked as intended and did converge.
         1 - Monomer is in the inner disk numerical regime, no integration peformed.
-        2 - Integrator worked as intended in this timestep, but there have been timeouts in the past.
-        3 - Integrator worked as intended in this timestep, but there have been manual resets in the past.
+        2 - Integrator worked as intended in this timestep, but there have been timeouts in the past (index 5).
+        3 - Integrator worked as intended in this timestep, but there have been ice mantle resets in the past (index 6).
         ---- Default cutoff ----
-        4 - Integrator worked as intended in this timestep, but there have been convergence errors in the past.
+        4 - Integrator worked as intended in this timestep, but there have been convergence errors in the past (index 7).
         5 - Timeout error.
         6 - Convergence error, ice mantle reset due to high local UV radiation.
-        7 - Convergence error.
+        7 - Convergence error, unhandled.
         """
    
-        #abunArr = np.array([self.environment["gasAbun"+self.disk.iceList[n]] for n in range(self.iceNum)])
-        #abunFact = np.mean(abunArr)/np.max(abunArr)
         
-        # originally we had just the monomer mass #######################
+        # Rescale the ice masses such that integrator is more stable (arbitrary unit of potatoes).
         self.numFact = self.monomer.iceTot_sol[-1]*self.iceScaleFact*self.monomer.prop["mMon"] # kg/potatoes
         y0 = np.array([(self.monomer.ice_sol[self.disk.iceList[n]])[-1]/self.numFact for n in range(self.iceNum)])
-        # such that y0 is in potatoes
+        # Such that y0 is in potatoes
         
         if self.migration or self.collisions:
             delt = self.delta_t/(1e3*self.sTOyr)
@@ -2303,7 +2269,6 @@ class Model:
 
         t_start = 0
         t_stop = delt
-        #print(t_start, t_stop, t_in)
         
         integratorList = ["LSODA", "Radau", "BDF"] # LSODA should be most flexible, but can be worth trying others in case of failure (Radau & BDF are specifically written for stiff systems).
         I = len(integratorList)
@@ -2341,7 +2306,7 @@ class Model:
                     self.monomer.exitIndex = np.max(self.monomer.exitTracker)-3
                 else:
                     self.monomer.exitIndex = 0
-        else:
+        else: # Otherwise do not run the ice evolution code since the amount of ice is negligible inside r<1 AU.
             self.monomer.exitIndex = 1
             success = True
             sol = {}
@@ -2349,7 +2314,7 @@ class Model:
             sol["t"] = np.linspace(t_start, t_stop, 2)
         
         if (i-1)>0:
-            print("Default ice routine failed, monomer exited index ",self.monomer.exitIndex," with backup routine ", integratorList[i-1], ". Success: ", success)            
+            print("Default ice routine failed, monomer exited with index ",self.monomer.exitIndex," with backup routine ", integratorList[i-1], ". Success: ", success)            
             
         solution = sol["y"]*self.numFact   
         
@@ -2373,19 +2338,17 @@ class Model:
         if (not success):
             self.monomer.corrupt = True
         
-        #print(self.monomer.t_sol, self.monomer.ice_sol["H2O"])
         
     def doIceEvolution(self, r_in, z_in, t_in):
         """
         At each timestep, we run this algorithm to update the abundances in the ice.
         """
-        
-        #print("b -",self.monomer.exposed)
+
         if self.legacyIce:
             self.doIceEvolutionMyOwn(r_in, z_in, t_in)
         else:
             self.doIceEvolutionSciPy(r_in, z_in, t_in)
-        #print("a -",self.monomer.exposed)
+
 
         
 #################################################################################################
@@ -2394,7 +2357,9 @@ class Model:
     
     
     def tauMz(self, t, r, z, Hp=None, size=None):
-        "Returns the vertical settling timescale in seconds. Traversed distance is one particle scale height"    
+        """
+        Returns the vertical settling timescale in seconds. Traversed distance is one particle scale height
+        """    
         
         vz = abs(self.velocity_z(t, r, z, size=size))
         
@@ -2407,7 +2372,9 @@ class Model:
     
     
     def tauMr(self, t, r, z, Hp=None, size=None):
-        "Returns the radial drift timescale in seconds. Traversed distance is one particle scale height, unless PisoBenchmark" 
+        """
+        Returns the radial drift timescale in seconds. Traversed distance is one particle scale height, unless PisoBenchmark
+        """ 
     
         vr = abs(self.velocity_r(t, r, z, size=size))
         if Hp==None:
@@ -2422,7 +2389,9 @@ class Model:
     
     
     def tauTub(self, t, r, z, Hg=None):
-        "Returns the turbulent stirring timescale in seconds." 
+        """
+        Returns the turbulent stirring timescale in seconds.
+        """ 
         
         Hg = self.calculateScaleHeight(r, method="mcfost", kind="gas")
         viscosity = self.nuTur(t, r, z, midplane=True)
@@ -2440,12 +2409,6 @@ class Model:
             tauCol = 1/np.sum(self.colRates)
         else:
             tauCol = 1/np.sum(self.effColRates)
-        #print(self.effColRates)
-        #print(np.sum(self.effColRates))
-       
-        #print(tauCol/self.sTOyr)
-        #if minimum:
-        #    tauCol = np.min(tauCol)
         
         return tauCol
     
@@ -2487,7 +2450,7 @@ class Model:
         """
         Calculates the thermal desorption timescale in accordance with Piso+ 2015 in seconds.
         
-        !!! Do not use outside of PisoBenchmark !!!
+        !!! Do not use outside of PisoBenchmark==True !!!
         """
                
         
@@ -2506,7 +2469,7 @@ class Model:
         
         tauList = [1e6*self.sTOyr]
         
-        if self.collisions: # assumes that the effective collision rates are already calculated.
+        if self.collisions: # Assumes that the effective collision rates are already calculated.
             tauCol = self.tauCol(t, r, z)
             tauList.append(tauCol)
             
@@ -2522,8 +2485,6 @@ class Model:
                 tauTub = self.tauTub(t, r, z)
                 tauList.append(self.ftub*tauTub)
         
-        #print("")
-        #print(np.array(tauList)/self.sTOyr)
         # Note that the timescale is chosen to be shorter if this is required by the ice formation algorithm.
         if (self.collisions or self.migration):
             tauMin = min(tauList)
@@ -2537,7 +2498,7 @@ class Model:
     
     
 #################################################################################################
-# Main functions
+# Main numerical functions
 #################################################################################################
 
     def probeTimescales(self, size, species):
@@ -2550,7 +2511,7 @@ class Model:
         
         tauSol = np.zeros((R,Z,6))
         
-        self.initGradients(size=size) ##############! Repeat whenever size changes!!!
+        self.initGradients(size=size) # Repeat whenever size changes.
         self.initDensities()
     
         
@@ -2580,11 +2541,6 @@ class Model:
         """
         If integrateMonomer receives randomize=True, we draw our monomer based on the 2D density distribution of the background model.
         """
-
-        #r0 = 101
-        #
-        #while r0>(self.para["Rtaper"]/self.auTOm):
-        #    r0 = (self.innerRdraw/np.random.power(self.para["epsilon"]))
         
         r0 = loguniform.rvs(self.innerRdraw, self.outerRdraw)
         z0 = r0*(0.2*np.random.rand()-0.1)
@@ -2607,11 +2563,16 @@ class Model:
         """
         Evolves a monomer over time.
         
-        size        - Monomer size in m
-        t_stop_in   - Final integration time in yr
-        t_start     - Starting integration time. Would not set this to anything different than zero.
-        r0          - Initial radial position in AU.
-        z0          - Initial vertical position in AU.
+        size:        
+            Monomer size in m
+        t_stop_in:
+            Final integration time in yr
+        t_start:
+            Starting integration time. Would not set this to anything different than zero.
+        r0:
+            Initial radial position in AU.
+        z0:
+            Initial vertical position in AU.
         """
         
         if not self.supverbose:
@@ -2670,11 +2631,10 @@ class Model:
         if not self.supverbose:
             print("Monomer seed is: "+str(self.seedStart))
         np.random.seed(self.seedNo)
+
         # Initialize monomer
         # ------------------
         self.monomer = Monomer(self, r0, z0, size=size)
-        #self.monomer.homeAggregate.prop["sAgg"] = size
-        #self.monomer.prop["sMon"] = size
 
         self.monomer.r_sol = [self.monomer.initR]
         self.monomer.z_sol = [self.monomer.initZ]
@@ -2682,11 +2642,13 @@ class Model:
         self.monomer.sAgg_sol = [self.monomer.homeAggregate.prop["sAgg"]]
         self.monomer.zMon_sol = [0]
         self.monomer.sec_sol = {}
-        # We here also define a auxiliary array which attempts to keep track of whether data points have
-        # become "corrupt" due to convergence failures of the integration routines.
+
+        # We here also define two auxiliary arrays which attempt to keep track of the stability of the ice integrator.
+        # Corruption tracker 
         self.monomer.corrupt = False
         self.monomer.corruption = [int(self.monomer.corrupt)]     
         
+        # Exit index tracker
         self.monomer.exitIndex = 0
         self.monomer.exitTracker = [0]
         
@@ -2694,33 +2656,36 @@ class Model:
         ticTot = process_time()
        
         
-        self.initGradients() ##############! Repeat whenever size changes!!!
+        self.initGradients() # Repeat whenever size changes.
             
-        if self.collisions: ### calculate the size-dependent grain sizes
+        if self.collisions: # Calculate the size-dependent grain sizes
             self.initDensities()
             self.monomer.sec_sol["interaction"] = [0]
             verbose_string = "exposed"
-            if self.colEq: ### Update sAgg and zMon.
+
+            if self.colEq: # Update sAgg and zMon.
                 self.initAggregate(0, r0, z0)
                 self.monomer.sAgg_sol = [self.monomer.homeAggregate.prop["sAgg"]]
                 self.monomer.zMon_sol = [self.monomer.prop["zMon"]]
                 self.monomer.sec_sol["exposed"] = [int(self.monomer.exposed)]
+
                 if int(self.monomer.exposed)==0:
                     verbose_string = "unexposed"
+           
             else:
                 self.monomer.sec_sol["exposed"] = [1]
         if not self.supverbose:
             print("Monomer placed in aggregate:")
             print("sAgg:"+10*" "+"{:.2e} m".format(self.monomer.homeAggregate.prop["sAgg"]))
             print("zMon:"+10*" "+"{:.2e} m".format(self.monomer.prop["zMon"]))
+            
             if self.monomer.exposed:
                 verbose_string = "exposed"
             else:
                 verbose_string = "unexposed"
+
             print("State:"+10*" "+verbose_string)
 
-            
-       # if self.trackice: # define the data structures for ice budgets.
         self.initIces(0, r0, z0)
         
         if not self.supverbose:
@@ -2737,8 +2702,7 @@ class Model:
             print(50*"-")    
             print(" ")
         
-        
-        
+        # Define some extra arrays to do main function timing.
         probeEnvironmentDat = []
         collisionRateDat = []
         moveGrainDat = []
@@ -2748,9 +2712,7 @@ class Model:
         self.delta_t = self.constTimestep[1]*self.sTOyr
         
         
-        
-        
-        # The main integration time loop
+        # The main time loop
         # -------------------------------------------------------------------
                 
         while (tn<self.t_stop):
@@ -2773,10 +2735,9 @@ class Model:
             r_now = self.monomer.r_sol[-1]
             z_now = self.monomer.z_sol[-1]
             t_now = self.monomer.t_sol[-1]
-#             if len(self.monomer.r_sol)<10:
-#                 print("Initialized sizes:", self.monomer.prop["sMon"], self.monomer.homeAggregate.prop["sAgg"])
+
             tic = process_time()
-            self.probeEnvironment(r_now, z_now, t_now)# Calculate interpolated quantities
+            self.probeEnvironment(r_now, z_now, t_now) # Calculate interpolated quantities
             toc = process_time()
             probeEnvironmentDat.append(toc-tic)            
             
@@ -2805,24 +2766,25 @@ class Model:
             if self.store==0:
                 self.storeEnvironment(r_now, z_now, t_now)
            
-            #print(self.delta_t/(self.sTOyr))
-            # delta_t is in seconds, because we only use it inside the routine. 
 
-            # Do ice formation
+            # Do ice evolution.
+            # ------------------------   
             if self.trackice:
                 tic = process_time()
-                self.doIceEvolution(r_now, z_now, t_now) # Note that ice formation may decrease the stepsize if it turns out that ice formation goes very fast.
+                self.doIceEvolution(r_now, z_now, t_now) # Note that in legacy mode, ice formation may decrease the stepsize 
+                # if it turns out that ice formation goes very fast.
                 toc = process_time()
                 doIceEvolutionDat.append(toc-tic)
             else:
                 doIceEvolutionDat.append(0)
            
-            # Do collisions before migration
+            # Do collisions
+            # ------------------------  
             if self.collisions:
                 tic = process_time()
                 self.doCollisions(r_now, z_now, t_now)
                 if self.sizeChanged:
-                    self.initGradients() # once done, re-calculate the gradients because grain diffusion slopes have changed. Only do this if
+                    self.initGradients() # Once done, re-calculate the gradients because grain diffusion slopes have changed. Only needed if
                     # collision occured; otherwise the home aggregate size remains the same.
                 toc = process_time()
                 doCollisionDat.append(toc-tic)
@@ -2836,8 +2798,10 @@ class Model:
 
                     else:
                         self.monomer.vRel_sol.append(self.vRel)
+
                 self.monomer.sAgg_sol.append(self.monomer.homeAggregate.prop["sAgg"])
                 self.monomer.zMon_sol.append(self.monomer.prop["zMon"])
+
             else:
                 self.monomer.sAgg_sol.append(self.monomer.homeAggregate.prop["sAgg"])
                 self.monomer.zMon_sol.append(0)
@@ -2849,6 +2813,7 @@ class Model:
 
             
             # Move the grain if we have set self.migration==True. We do this last; because we can treat all other processes locally.
+            # ------------------------  
             if self.migration:
                 tic = process_time()
                 
@@ -2865,11 +2830,13 @@ class Model:
                 self.monomer.z_sol.append(z_now)
                 moveGrainDat.append(0)
                       
-            # Update corruption array
+            # Update corruption and exit index trackers.
+            # ------------------------ 
             self.monomer.corruption.append(int(self.monomer.corrupt))
             self.monomer.exitTracker.append(self.monomer.exitIndex)
                       
             # Advance timestep
+            # ------------------------ 
             t_new = self.monomer.t_sol[-1] + self.delta_t/(1e3*self.sTOyr) # Advance timestep  
 
             tn = t_new
@@ -2888,6 +2855,8 @@ class Model:
                 self.monomer.vRel_sol.append(self.vRel)
         
         tocTot = process_time()
+
+        # Print timing data.
         if self.verbose>-1:
             print("")
             print("Integration complete, elapsed CPU time is {:.2f} s".format(tocTot-ticTot))
@@ -2921,6 +2890,7 @@ class Model:
                 print("Average time per call : {:.2e} CPUs".format(tdoCollisionTot/T))
                 print("-"*50)
 
+        # Some final data management.
         if self.migration or self.collisions:
             self.monomer.r_sol = np.array(self.monomer.r_sol)
             self.monomer.z_sol = np.array(self.monomer.z_sol)
@@ -2946,14 +2916,13 @@ class Model:
                 
         if self.trackice:
             # Calculate element ratios.
-            #iceMassSum = np.zeros(len(self.monomer.t_sol))
             for n in range(self.iceNum):
                 self.monomer.ice_sol[self.disk.iceList[n]] = np.array(self.monomer.ice_sol[self.disk.iceList[n]])
-                #iceMassSum += self.monomer.ice_sol[self.disk.iceList[n]]
             self.monomer.iceTot_sol = np.array(self.monomer.iceTot_sol)
             if self.store==0:
                 self.monomer.ele_sol = self.calcElements()
             # Abundance ratio (number densities, not mass ratio)
+            # mH        mC      mN      mO      mS
             #1.00797, 12.011, 14.0067, 15.9994, 32.06
                 self.monomer.sec_sol["ratC/O"] = self.monomer.ele_sol[:,1]/self.monomer.ele_sol[:,3]*(15.9994/12.011)
                 self.monomer.sec_sol["ratN/O"] = self.monomer.ele_sol[:,2]/self.monomer.ele_sol[:,3]*(15.9994/14.0067)
@@ -2991,21 +2960,13 @@ class Disk:
             self.model = pread.read_prodimo(self.diskFolder, td_fileIdx=None)
             self.model.dust = pread.read_dust(self.diskFolder)
 
-        self.parameters = self.model.params.mapping # disk parameters from parameter.out are loaded in this dictionary. Used to assign to background model parameters in SHAMPOO.
+        self.parameters = self.model.params.mapping # Disk parameters from parameter.out are loaded in this dictionary. Used to assign to background model parameters in SHAMPOO.
         self.prepareInterpol()
         self.doInterpol()
 
     
     def prepareInterpol(self):
-        #print("Starting interpolation")
 
-        # tg, td, muH, rhog, rhod, ng, nd, pressure, soundspeed, nmol[:,:,self.model.spnames["234"]]
-        # spnames: translation table from species to nspec
-
-        # Old version
-        #self.rVals = self.model.x.flatten()
-        #self.zVals = self.model.z.flatten()/self.rVals
-        #self.points = np.stack((self.rVals, self.zVals), axis=1)
         self.rVals = self.model.x[:,0]
         self.zVals = (self.model.z/self.model.x)[0,:]
 
@@ -3048,8 +3009,6 @@ class Disk:
                 indexIce = self.model.spnames[spec+"#"]
                 self.data["iceAbun"+spec] = np.log10(1e6*self.model.nmol[:,:,indexIce])
                 self.data["totAbun"+spec] = np.log10(1e6*(self.model.nmol[:,:,indexGas]+self.model.nmol[:,:,indexIce]))
-                #print("totAbun"+spec, self.data["totAbun"+spec])
-                #print((self.data["gasAbun"+spec])[10,0], (self.data["iceAbun"+spec])[10,0],(self.data["totAbun"+spec])[10,0])
                 n +=1
             else:
                 print("Omitting species : "+spec)
@@ -3060,9 +3019,7 @@ class Disk:
             print("Sucessfully loaded",N, "species.")
             print(self.species)
             self.showElementCountResults()
-        
-        
-            
+              
                 
     
     def elementCount(self, name):
@@ -3106,7 +3063,6 @@ class Disk:
     def doInterpol(self):
         self.interpol = {}
 
-        ##print("Doing interpolation")
         for name in self.data.keys():
             self.interpol[name] = RectBivariateSpline(self.rVals, self.zVals, self.data[name], kx=self.order, ky=self.order)
         print("Finished doing interpolation")
@@ -3191,7 +3147,7 @@ class Monomer:
     
     def __init__(self, model, r0, z0, home_aggregate=None, size=0.05e-6):
         """
-            Initializes a monomer. For convenience, r0 and z0 are in AU.
+            Initializes a monomer. r0 and z0 are in AU.
         """
 
         if home_aggregate==None:
@@ -3261,7 +3217,7 @@ class Analysis:
                     zdown = self.disk.model.z[r,z]/self.disk.model.x[r,z]-self.disk.model.z[r,z-1]/self.disk.model.x[r,z-1]
 
                 elif z==0:
-                    zup = self.disk.model.z[r,1]/self.disk.model.x[r,1] # may require an extra factor 2? Check!
+                    zup = self.disk.model.z[r,1]/self.disk.model.x[r,1] 
                     zdown = 0
                 else:
                     zup = self.disk.model.z[r,-1]/self.disk.model.x[r,-1]-self.disk.model.z[r,z]/self.disk.model.x[r,z]
@@ -3358,7 +3314,6 @@ class Analysis:
         
         self.monomerData = pd.DataFrame.from_dict(self.monomerData)      
        
-
         print("Loaded",self.modNum,"monomers")   
                 
                 
@@ -3404,7 +3359,6 @@ class Analysis:
             if self.removeCorrupted=="selective":
                 cond = (self.monomerData["exitIndex"])[self.modNum]<=self.cleaningIndex
                 for item in self.monomerData.keys():
-                    #print(item, type((self.monomerData[item])[self.modNum]))
                     (self.monomerData[item])[self.modNum] = ((self.monomerData[item])[self.modNum])[cond]
                 
         

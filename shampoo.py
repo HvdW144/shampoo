@@ -3458,7 +3458,7 @@ class Analysis:
     
     def calcAvgQuant(self, quant):
         """
-        Auxiliary function which calculates the weighted average grid when called on in a plotting script.
+        Auxiliary function which calculates the weighted average grid when called on in a plotting script. In principle not necessary to use.
         """
 
         R = self.disk.model.nx

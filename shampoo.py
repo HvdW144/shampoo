@@ -2033,12 +2033,6 @@ class Model:
             return diffMass, ads, tds, pds, qFactor # In the old integration formalism we can return the rates
         else:
             # Otherwise we would have to store them in a class variable. Implement this if ever needed in the current integration algorithm.
-            # if self.t_track==0.:
-            #    iceInd = self.disk.iceList.index(iceName)
-            #    self.rateTrack[iceInd, 0] = cross*ads
-            #    self.rateTrack[iceInd, 1] = surface*tds
-            #    self.rateTrack[iceInd, 2] = cross*pds
-            #    print("Clause triggered at t={:.2f}".format(t_in/(self.sTOyr*1e3)))
             
             return diffMass
         
@@ -2717,6 +2711,7 @@ class Model:
                 
         while (tn<self.t_stop):
             
+            # Doing time tracking administration
             tocTot = process_time()
             progress = tn/self.t_stop
             if progress>0:
@@ -2732,6 +2727,7 @@ class Model:
             if self.verbose>2:
                 print("Performing timestep "+str(n)+" at t = {:.2e} yr".format(self.monomer.t_sol[-1]*1e3))
 
+            # Defining the space-time coordinates of this particular time step.
             r_now = self.monomer.r_sol[-1]
             z_now = self.monomer.z_sol[-1]
             t_now = self.monomer.t_sol[-1]
@@ -2750,7 +2746,7 @@ class Model:
             else:
                 collisionRateDat.append(0)
                 
-            # Set the timestep
+            # Determine the timestep
             # ------------------------
             if self.migration or self.collisions:
                 if self.constTimestep[0]:
@@ -2771,7 +2767,7 @@ class Model:
             # ------------------------   
             if self.trackice:
                 tic = process_time()
-                self.doIceEvolution(r_now, z_now, t_now) # Note that in legacy mode, ice formation may decrease the stepsize 
+                self.doIceEvolution(r_now, z_now, t_now) # Note that in legacy mode, ice formation may decrease the timestep size 
                 # if it turns out that ice formation goes very fast.
                 toc = process_time()
                 doIceEvolutionDat.append(toc-tic)
@@ -2844,6 +2840,8 @@ class Model:
             if self.migration or self.collisions:
                 self.monomer.t_sol.append(t_new)          
         
+            # End of main time loop.
+            # ------------------------
             
         T = len(self.monomer.t_sol)
         if self.store==0:
@@ -2856,7 +2854,7 @@ class Model:
         
         tocTot = process_time()
 
-        # Print timing data.
+        # Print timing data once the integration is complete.
         if self.verbose>-1:
             print("")
             print("Integration complete, elapsed CPU time is {:.2f} s".format(tocTot-ticTot))
@@ -2923,7 +2921,7 @@ class Model:
                 self.monomer.ele_sol = self.calcElements()
             # Abundance ratio (number densities, not mass ratio)
             # mH        mC      mN      mO      mS
-            #1.00797, 12.011, 14.0067, 15.9994, 32.06
+            # 1.00797, 12.011, 14.0067, 15.9994, 32.06
                 self.monomer.sec_sol["ratC/O"] = self.monomer.ele_sol[:,1]/self.monomer.ele_sol[:,3]*(15.9994/12.011)
                 self.monomer.sec_sol["ratN/O"] = self.monomer.ele_sol[:,2]/self.monomer.ele_sol[:,3]*(15.9994/14.0067)
                 self.monomer.sec_sol["ratS/O"] = self.monomer.ele_sol[:,4]/self.monomer.ele_sol[:,3]*(15.9994/32.06)
@@ -2935,11 +2933,29 @@ class Model:
     
 
 class Disk:
-
+    """
+        Class which stores the information on the background model.
     
-    def __init__(self, species=["H2", "H2O", "CO"], folder="../BackgroundModels/ShampooCodingPaper/vFrag5", modelName="ProDiMo.out", t_index="{:04d}".format(5), order=1, verbose=-1):
+    """
+    
+    def __init__(self, species=["H2", "H2O", "CO"], folder="../BackgroundModels/ShampooCodingPaper/vFrag5", modelName="ProDiMo.out", t_index=None, 
+                 order=1, verbose=-1):
+        """
+            species:
+                List of species for which we should peform interpolation. Can also be set to "all" to load all species present in the given ProDiMo model. 
+            folder:
+                Path from where to read the ProDiMo.out files.
+            modelName:
+                Name of the main ProDiMo.out file, is passed to the ProDiMoPy module.
+            t_index:
+                Time index, necessary to specify when using a ProDiMo model with time-dependent chemistry.
+            order:
+                Polynomial order to fit for the interpolated data. Best is to use linear interpolation to prevent overdetermination (order=1).
+            verbose:
+                Verbose level, best is to leave at -1.
+        """
 
-        
+
         self.verbose=verbose
         self.order = order
         self.diskFolder = folder
@@ -2952,6 +2968,8 @@ class Disk:
             
         print(self.species)
         print(self.diskFolder)
+
+        # Reading the background model. Note that if no appropriate time index is found.
         try:
             self.model = pread.read_prodimo(self.diskFolder, filename=modelName, td_fileIdx=t_index)
             self.model.dust = pread.read_dust(self.diskFolder)
@@ -2960,6 +2978,7 @@ class Disk:
             self.model = pread.read_prodimo(self.diskFolder, td_fileIdx=None)
             self.model.dust = pread.read_dust(self.diskFolder)
 
+        # Prepare the interpolated data to be used by Model-instances.
         self.parameters = self.model.params.mapping # Disk parameters from parameter.out are loaded in this dictionary. Used to assign to background model parameters in SHAMPOO.
         self.prepareInterpol()
         self.doInterpol()
@@ -2981,8 +3000,6 @@ class Disk:
         self.data["rhod"] = np.log10(1e3*self.model.rhod)
         self.data["nd"] = np.log10(1e6*self.model.nd)	
 
-
-        #self.pressure = LinearNDInterpolator(zipped, self.model.pressure.flatten()) #### CONVERT TO SI
         self.data["soundspeed"] = 1e3*self.model.soundspeed
 
         self.data["chiRT"] = np.log10(self.model.chiRT)
@@ -2991,7 +3008,8 @@ class Disk:
         # Initialize chemical species abundances
         self.iceList = []
         self.elementDict = {} # A dictionary containing all ice molecules considered, and the number of each element present.
-        # currently we only consider H,C,N,O,S. With the value of elementDict containing a np array with 5 elements representing the number of atoms of each element in a given molecule.
+        # currently we only consider H,C,N,O,S. With the value of elementDict containing a np array with 5 elements representing the 
+        # number of atoms of each element in a given molecule.
         
         N = len(self.species)
         n = 0
@@ -2999,7 +3017,9 @@ class Disk:
             print("Received",N,"species. Attempting to load background model number densities...")
         while n<N:
             spec = self.species[n]
-            #print(spec)
+            # Dealing with individual species. Note that ice (name == spec+#) and gas (name == spec) species may not be both present in the background model.
+            # In that case we skip the species.
+
             if (spec in self.model.spnames.keys())and(spec+"#" in self.model.spnames.keys())and("-" not in spec)and("+" not in spec):
                 indexGas = self.model.spnames[spec]
                 self.data["gasAbun"+spec] = np.log10(1e6*self.model.nmol[:,:,indexGas])
@@ -3016,6 +3036,7 @@ class Disk:
                 N = len(self.species)
         
         if self.verbose>-1:
+            # An auxiliary clause for debugging purposes.
             print("Sucessfully loaded",N, "species.")
             print(self.species)
             self.showElementCountResults()
@@ -3061,6 +3082,9 @@ class Disk:
             
     
     def doInterpol(self):
+        """
+        Calculates the interpolation instances and stores them in a dictionary.
+        """
         self.interpol = {}
 
         for name in self.data.keys():
@@ -3114,7 +3138,9 @@ class Disk:
 
 
 class HomeAggregate:
-
+    """
+    Instances of HomeAggregate track the properties of the home aggregate simulated in a Model-instance.
+    """
     
     def __init__(self, model, size):
         """
@@ -3143,11 +3169,21 @@ class HomeAggregate:
 
 
 class Monomer:
-    
+    """
+    Instances of Monomer track the properties of the monomer simulated in a Model-instance.
+    """
     
     def __init__(self, model, r0, z0, home_aggregate=None, size=0.05e-6):
         """
-            Initializes a monomer. r0 and z0 are in AU.
+            Initializes a monomer. 
+            model:
+                Model-instance associated with this monomer.
+            (r0, z0):
+                The initial position AU.
+            home_aggregate:
+                Instance of HomeAggregate. If not given a new instance of HomeAggregate will be created.
+            size:
+                Monomer radius. Should be equal to minimum grain size a_min in the background ProDiMo model (default 5e-8 m).
         """
 
         if home_aggregate==None:
@@ -3161,6 +3197,10 @@ class Monomer:
 
     
     def initProps(self, model, size):
+        """
+            Auxiliary function of initializing monomer properties. 
+        """
+
         self.prop = {}
 
         self.exposed = True
@@ -3183,15 +3223,20 @@ class Monomer:
 
 ##############################################################################################################
 # Start of monomer processing module, used for statistical analysis 
-# NOTE! Requires significant memory for >100 monomers (order of GB to 10s of GB) for 10000+ monomers.
+# NOTE! Requires significant memory for >100 monomers (order of a few GB up to 100+ GB for 10000+ of monomers).
 ##############################################################################################################
 
 class Analysis:
     
-    def __init__(self, disk, homepath="/net/zach/data/users/moosterloo/PhD/Papers/ShampooSciencePaper"):
-        
+    def __init__(self, disk):
+        """
+        disk:
+            Instance of Disk to use as the background disk model. 
+            
+            !!!Should be the same ProDiMo model that is used for the set of monomer simulations to be loaded and analyzed.!!
+        """
+
         self.disk = disk
-        self.homepath = homepath
         
         # Calculate the pdfs for the weight calculation.
         self.init_pdfs()
@@ -3199,7 +3244,11 @@ class Analysis:
         self.auTOm = 1.496*1e11
     
     def init_pdfs(self):
-        
+        """
+            Calculates the numerical and physical mass distributions of monomers. See also Sect. 2.3 of Oosterloo+2024a.
+        """
+
+
         self.Pn = 1/self.disk.model.x
         self.Pp = self.disk.model.rhod/np.sum(self.disk.model.rhod)
         
@@ -3254,11 +3303,13 @@ class Analysis:
         
             
     def loadModels(self, loadPath="./Simulations/NonLocal1/", monoNum=100, read=False, cleaningIndex=7, removeCorrupted="selective"):
-        """
-        Keyword explanation:
-        
+        """   
+        Main function that loads the monomer models and stores their data in a dataframe.
+
+        loadPath:
+            The folder in which the monomer data is located.
         monoNum:
-        
+            The number of monomers to be loaded.
         read:
             ----
         cleaningIndex:
@@ -3269,11 +3320,7 @@ class Analysis:
             "selective": Remove monomer data points with exit index higher than the cleaningIndex.
             "noIce": Do not load any data related to ice evolution.
         """
-         
-        
-        if loadPath==None:
-            loadPath = self.homepath+"/Simulations/NonLocal2"
-        
+                 
         self.monoNum = monoNum
         self.cleaningIndex = cleaningIndex
         self.removeCorrupted = removeCorrupted
@@ -3348,11 +3395,12 @@ class Analysis:
                 # Do these flags follow a particle?
                 iceList = mod.monomer.ice_sol[ice]
 
+                # Deal with really ugly values in monomer simulations. Should not be occuring in the current version of the main SHAMPOO code.
                 mod.monomer.corruption[iceList<0] = 1
                 iceList[iceList<0] = 0 # This might be an issue...
 
                 mod.monomer.corruption[np.isinf(iceList) | np.isnan(iceList)] = 1
-                iceList[np.isinf(iceList) | np.isnan(iceList)] = 0 # This probably solves itsself
+                iceList[np.isinf(iceList) | np.isnan(iceList)] = 0
 
                 (self.monomerData[ice])[self.modNum] = iceList
 
@@ -3383,10 +3431,7 @@ class Analysis:
     
     def calculateWeights(self, mod, nx, nz):
         """
-        Calculates the monomer data weights, informed from
-        
-        - the timestep size
-        - the density at the origin compared to the density at the gridpoint (ratio)
+        Calculates the monomer data weights.
         """
         
         # First weight: The timesteps:
@@ -3397,16 +3442,14 @@ class Analysis:
         timesteps[0:-1] = mod.monomer.t_sol[1::]-mod.monomer.t_sol[0:-1]
         timesteps[-1] = 0 # we do not want to include the last timestep of each simulation        
     
-        # The second weight comes from differences in the mass pdf from the disk density structure and 
-        # the pdf used in the sampling.
+        # The second and third weight come from differences in the mass pdf from the disk density structure and 
+        # the pdf used in the sampling, along with a geometrical correction (See Oosterloo+2024a)
         xind = int(nx[0])
         zind = int(nz[0])        
         
         proprat = np.ones(T)*self.Pp[xind, zind]/(self.Pn[xind,zind]*self.rGrid[xind,zind]*self.zGrid[xind,zind])
     
-        # Calculate the total weight.
-               
-        
+        # Calculate the total weight.        
         weights = timesteps*proprat
 
         return weights     

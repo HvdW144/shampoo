@@ -8,6 +8,4 @@ Written by Mark Oosterloo (University of Groningen (UG), Vrije Universiteit Amst
 # Getting started: Monte-Carlo simulation
 
 # Associated publications
-Oosterloo, M., Kamp, I., van Westrenen, W., Dominik, C., 2023. SHAM-
-POO: A stochastic model for tracking dust particles under the influence
-of non-local disk processes. Astronomy and Astrophysics 674, A124
+Oosterloo, M., Kamp, I., van Westrenen, W., Dominik, C., 2023. SHAMPOO: A stochastic model for tracking dust particles under the influence of non-local disk processes. Astronomy and Astrophysics 674, A124

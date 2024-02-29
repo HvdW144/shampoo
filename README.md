@@ -3,7 +3,7 @@ SHAMPOO (**S**toc**HA**stic **M**onomer **P**r**O**cess**O**r) is a model simula
 
 Developed by Mark Oosterloo (University of Groningen (UG), Vrije Universiteit Amsterdam (VUA)) in collaboration with Inga Kamp (UG) and Wim van Westerenen (VUA)
 
-Please do consult the authors before using SHAMPOO for any results that are to be published to ensure the code has been set up appropriately.
+Please do consult the authors before publishing any results involving SHAMPOO to ensure the code has been set up appropriately.
 
 # Introduction
 Over the past years, many modelling efforts have explored the effects of dynamical, collisional and ice processing on dust in planet-forming disks. In this context, SHAMPOO provides a framework to explore the effects of these three processes combined on an individual dust particle in a disk that remains both physically and chemically static over the duration of the simulation. SHAMPOO is therefore aimed towards providing a complete description of these processes on the properties of dust particles in the planet-forming region on timescales shorter than 100 000 yr. 

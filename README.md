@@ -14,6 +14,6 @@ Over the past years, many modelling efforts have explored the effects of dynamic
 # Getting started: Monte-Carlo simulation
 
 # Associated publications
-[1] Oosterloo, M., Kamp, I., van Westrenen, W., Dominik, C., 2023. SHAMPOO: A stochastic model for tracking dust particles under the influence of non-local disk processes. Astronomy and Astrophysics 674, A124 
+[1] **Oosterloo, M.**, Kamp, I., van Westrenen, W., Dominik, C., **2023**. SHAMPOO: A stochastic model for tracking dust particles under the influence of non-local disk processes. Astronomy and Astrophysics 674, A124 
 
-[2] Oosterloo, M., Kamp, I., van Westrenen, W., 2024. The effect of nonlocal disk processes on the volatile CHNOS budgets of planetesimal-forming material. Astronomy and Astrophysics 
+[2] **Oosterloo, M.**, Kamp, I., van Westrenen, W., **2024**. The effect of nonlocal disk processes on the volatile CHNOS budgets of planetesimal-forming material. Astronomy and Astrophysics 

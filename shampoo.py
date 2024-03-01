@@ -268,18 +268,23 @@ class Model:
         """
         Auxiliary function which sorts out the input file.
         """
-
+        print("")
         if parameter_folder!=None:
             path = parameter_folder
         else:
             path = ""
 
+        print("Parameters obtained:")
+        print("-"*20)
         paraDict = pd.read_csv(path+"shampooInput.csv", header=None, index_col=0, usecols=(0,1), squeeze=True, comment="#", delimiter="\t", skipinitialspace=True)
         for item in paraDict.keys():
+
+            print(item, paraDict[item])
             if paraDict[item]=="True":
                 paraDict[item] = True
             elif paraDict[item]=="False":
                 paraDict[item] = False
+        print("-"*20)
 
         return paraDict
 
@@ -1752,7 +1757,7 @@ class Model:
         Determines whether erosion, fragmentation or coagulation takes place. All input is in SI.
         """
 
-        vRel = self.calcTotVRel(t, r, z, doPrint=False) # Note that calcTotVrel takes input in SI
+        vRel = self.calcTotVRel(t, r, z) # Note that calcTotVrel takes input in SI
         self.vRel = vRel
 
         cond = 99
@@ -1866,9 +1871,9 @@ class Model:
 
 
     def doCollisions(self, r_in, z_in, t_in):
-        """"
+        """
         The main function for the collisional evolution.
-        """"
+        """
 
         r, z, t = self.unpackVars(r_in, z_in, t_in)
 
@@ -1896,7 +1901,7 @@ class Model:
         """
         Calculates the exposure probability.
         """
-
+        
         tau = 3/4*(self.monomer.prop["zMon"]-self.monomer.prop["zCrit"])/self.monomer.prop["sMon"]*(self.monomer.homeAggregate.prop["phi"])
         pVals = expn(2, tau) # We solve the exponential integral
         return pVals
@@ -2299,7 +2304,7 @@ class Model:
             sol["y"] = self.floorval*self.monomer.prop["mMon"]/self.numFact*np.ones((self.iceNum, 2)) 
             sol["t"] = np.linspace(t_start, t_stop, 2)
 
-        if (i-1)>0:
+        if self.verbose>0:
             print("Default ice routine failed, monomer exited with index ",self.monomer.exitIndex," with backup routine ", integratorList[i-1], ". Success: ", success)            
 
         solution = sol["y"]*self.numFact   

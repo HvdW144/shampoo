@@ -11,7 +11,7 @@ Over the past years, many modelling efforts have explored the effects of dynamic
 # Getting started
 This repository contains the tools to simulate and analyze the trajectories of monomers in similar fashion as in [1]. For the tools to run and analyze larger simulations containing many monomers akin to [2], we refer the user to the authors.
 
-SHAMPOO is usually executed in a notebook fashion, although any python script should do. Any simulation peformed with SHAMPOO requires a background protoplanetary disk model generated with ProDiMo, along with an input file that has to end with ```shampooInput.csv```. 
+SHAMPOO is usually executed in a notebook fashion, although any python script should do. Any simulation peformed with SHAMPOO requires a background protoplanetary disk model generated with ProDiMo, along with an input file that has to end with ```shampooInput.csv```. See the folder ```InputFiles``` for an example input file.
 
 The notebook ```shampooIndividualMonomers.ipynb``` allows for the execution of a single SHAMPOO monomer the input file ```./InputFiles/DemoModelshampooInput.csv```, and is adjustable to allow for modification of the background disk model file and input file. All file paths are configurable in the notebook. The model has been set up to work together with the ```vFrag1``` model [1,2], which is available upon contacting the authors.
 

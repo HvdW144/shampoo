@@ -15,6 +15,16 @@ SHAMPOO is usually executed in a notebook fashion, although any python script sh
 
 The notebook ```shampooIndividualMonomers.ipynb``` allows for the execution of a single SHAMPOO monomer the input file ```./InputFiles/DemoModelshampooInput.csv```, and is adjustable to allow for modification of the background disk model file and input file. All file paths are configurable in the notebook. The model has been set up to work together with the ```vFrag1``` model [1,2], which is available upon contacting the authors.
 
+## Running the code in a virtual environment
+To run the code in a virtual environment:
+1. Open a terminal in the shampoo directory
+2. Create a virtual environment by running the following command: <br>
+```python -m venv venv```
+3. Activate the virtual environment by running the following command: <br>
+```.\venv\Scripts\activate``` (Windows) or ```source venv/bin/activate``` (Linux)
+4. Install the required packages by running the following command: <br>
+```pip install -r requirements.txt```
+
 # Associated publications
 [1] **Oosterloo, M.**, Kamp, I., van Westrenen, W., Dominik, C., **2023**. SHAMPOO: A stochastic model for tracking dust particles under the influence of non-local disk processes. Astronomy and Astrophysics 674, A124 
 

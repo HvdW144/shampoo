@@ -1,0 +1,5 @@
+﻿numpy
+pandas
+prodimopy
+scipy
+timeout-decorator

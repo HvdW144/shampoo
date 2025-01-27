@@ -19,9 +19,9 @@ The notebook ```shampooIndividualMonomers.ipynb``` allows for the execution of a
 To run the code in a virtual environment:
 1. Open a terminal in the shampoo directory
 2. Create a virtual environment by running the following command: <br>
-```python -m venv venv```
+```python -m venv .venv```
 3. Activate the virtual environment by running the following command: <br>
-```.\venv\Scripts\activate``` (Windows) or ```source venv/bin/activate``` (Linux)
+```.\.venv\Scripts\activate``` (Windows) or ```source .venv/bin/activate``` (Linux)
 4. Install the required packages by running the following command: <br>
 ```pip install -r requirements.txt```
 

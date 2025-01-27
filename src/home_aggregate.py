@@ -1,19 +1,9 @@
 ﻿import warnings
+
 warnings.filterwarnings("ignore")
 
 import numpy as np
-import pandas as pd
-import prodimopy.read as pread
-import prodimopy.plot as pplot
-from scipy.interpolate import RectBivariateSpline
-from scipy.optimize import root_scalar
-from scipy.integrate import solve_ivp
-from scipy.stats import loguniform
-from time import process_time
-from scipy.special import expn
-from timeout_decorator import timeout
-import os
-import pickle
+
 
 # Shampoo HomeAggregate file.
 #

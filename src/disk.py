@@ -1,4 +1,7 @@
-﻿import warnings
+﻿import logging
+import warnings
+
+from src.helpers import Logger
 
 warnings.filterwarnings("ignore")
 
@@ -14,9 +17,11 @@ from scipy.interpolate import RectBivariateSpline
 # Version: 15-03-2024
 
 class Disk:
+    logger = None
 
     def __init__(self, species=["H2", "H2O", "CO"], folder="../BackgroundModels/ShampooCodingPaper/vFrag5",
                  modelName="ProDiMo.out", t_index="{:04d}".format(5), order=1, verbose=-1):
+        logger = Logger.getLogger()
 
         self.verbose = verbose
         self.order = order
@@ -29,8 +34,8 @@ class Disk:
                                        encoding=None)).tolist()
             self.all = True
 
-        print(self.species)
-        print(self.diskFolder)
+        logger.log(self.species, level=logging.INFO)
+        logger.log(self.diskFolder, level=logging.INFO)
         try:
             self.model = pread.read_prodimo(self.diskFolder, filename=modelName, td_fileIdx=t_index)
             self.model.dust = pread.read_dust(self.diskFolder)

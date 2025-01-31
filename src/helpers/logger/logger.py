@@ -16,9 +16,9 @@ class Logger:
             console.setFormatter(formatter)
             self.logger.addHandler(console)
 
-    def log(self, message, level=logging.INFO):
+    def log(self, msg, lvl=logging.INFO):
         if not self.silent:
-            self.logger.log(level, message)
+            self.logger.log(lvl, msg)
 
     def getLogger(self):
         return self.logger

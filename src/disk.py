@@ -17,11 +17,9 @@ from scipy.interpolate import RectBivariateSpline
 # Version: 15-03-2024
 
 class Disk:
-    logger = None
 
     def __init__(self, species=["H2", "H2O", "CO"], folder="../BackgroundModels/ShampooCodingPaper/vFrag5",
                  modelName="ProDiMo.out", t_index="{:04d}".format(5), order=1, verbose=-1):
-        logger = Logger.getLogger()
 
         self.verbose = verbose
         self.order = order
@@ -34,14 +32,16 @@ class Disk:
                                        encoding=None)).tolist()
             self.all = True
 
-        logger.log(self.species, level=logging.INFO)
-        logger.log(self.diskFolder, level=logging.INFO)
+        # TODO: Might want to remove these logs
+        Logger.log(msg=self.species, lvl=logging.INFO)
+        Logger.log(msg=self.diskFolder, lvl=logging.INFO)
         try:
             self.model = pread.read_prodimo(self.diskFolder, filename=modelName, td_fileIdx=t_index)
             self.model.dust = pread.read_dust(self.diskFolder)
         except:
-            print(
-                "Appropriate background disk model timestamp not found, falling back on default disk loading routine...")
+            Logger.log(
+                msg="Appropriate background disk model timestamp not found, falling back on default disk loading routine...",
+                lvl=logging.WARNING)
             self.model = pread.read_prodimo(self.diskFolder, td_fileIdx=None)
             self.model.dust = pread.read_dust(self.diskFolder)
 
@@ -87,7 +87,9 @@ class Disk:
         N = len(self.species)
         n = 0
         if self.verbose > -1:
-            print("Received", N, "species. Attempting to load background model number densities...")
+            Logger.log(msg="Received " + str(N) + " species. Attempting to load background model number densities...",
+                       lvl=logging.INFO)
+
         while n < N:
             spec = self.species[n]
             # print(spec)
@@ -106,13 +108,14 @@ class Disk:
                 # print((self.data["gasAbun"+spec])[10,0], (self.data["iceAbun"+spec])[10,0],(self.data["totAbun"+spec])[10,0])
                 n += 1
             else:
-                print("Omitting species : " + spec)
-                (self.species).remove(spec)
+                Logger.log(msg="Omitting species : " + spec, lvl=logging.WARNING)
+                self.species.remove(spec)
                 N = len(self.species)
 
         if self.verbose > -1:
-            print("Sucessfully loaded", N, "species.")
-            print(self.species)
+            Logger.log(msg="Successfully loaded " + str(N) + " species.", lvl=logging.INFO)
+            # TODO: Might want to remove this log
+            Logger.log(msg=self.species, lvl=logging.INFO)
             self.showElementCountResults()
 
     def elementCount(self, name):
@@ -147,10 +150,13 @@ class Disk:
 
         longestName = max([len(spec) for spec in self.species])
 
-        print(" " * (longestName + 2), "H", "C", "N", "O", "S")
+        # TODO: Might want to remove this log
+        Logger.log(msg=" " * (longestName + 2) + "H C N O S", lvl=logging.INFO)
         for spec in self.species:
-            print(spec, " " * (longestName - len(spec)) + ":", (self.elementDict[spec])[0], (self.elementDict[spec])[1],
-                  (self.elementDict[spec])[2], (self.elementDict[spec])[3], (self.elementDict[spec])[4])
+            # TODO: Might want to remove this log, what the hell is this anyway?
+            Logger.log(msg=spec + " " * (longestName - len(spec)) + ":" + (self.elementDict[spec])[0] +
+                           (self.elementDict[spec])[1] + (self.elementDict[spec])[2] + (self.elementDict[spec])[3] +
+                           (self.elementDict[spec])[4], lvl=logging.INFO)
 
     def doInterpol(self):
         self.interpol = {}
@@ -159,7 +165,7 @@ class Disk:
         for name in self.data.keys():
             self.interpol[name] = RectBivariateSpline(self.rVals, self.zVals, self.data[name], kx=self.order,
                                                       ky=self.order)
-        print("Finished doing interpolation")
+        Logger.log(msg="Finished doing interpolation", lvl=logging.INFO)
 
     def expectedIce(self, rEva, zEva, species=None, label="ice"):
         """
